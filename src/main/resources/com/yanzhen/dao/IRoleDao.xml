@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yanzhen.dao.IRoleDao">
+    <!--查询菜单信息-->
+   <select id="queryRoleAll" resultType="com.yanzhen.po.Role">
+        select * from role order by type asc
+   </select>
+    <!--添加功能-->
+    <insert id="addRole" parameterType="com.yanzhen.po.Role">
+        insert into role(parent_id,name,remarks,type,create_time)values
+        (#{parentId},#{name},#{remarks},#{type},#{createTime})
+    </insert>
+
+
+    <!--删除操作 根据id删除节点以及下面的子节点-->
+    <delete id="deleteRoleById" parameterType="int">
+            delete from role where id=#{id} or id in (SELECT t3.id FROM
+	( SELECT *, IF (find_in_set(t1.parent_Id, @p) >0,@p:= concat(@p,',',id),0) AS childId FROM
+			(SELECT id,parent_Id FROM 	role t 	 	ORDER BY id) t1,
+    (SELECT @p:= #{id} ) t2 ) t3 WHERE	childId != 0) ;
+    </delete>
+
+
+    <!--根据id查询记录信息-->
+    <select id="queryRoleByID" parameterType="int" resultType="com.yanzhen.po.Role">
+        select * from role where id=#{id}
+    </select>
+
+    <!--修改菜单实现-->
+    <update id="updateRole" parameterType="com.yanzhen.po.Role">
+        update role
+        <set>
+            <if test="name!=null">
+                name=#{name},
+            </if>
+            <if test="remarks!=null">
+                remarks=#{remarks},
+            </if>
+            <if test="updateTime!=null">
+                update_time=#{updateTime},
+            </if>
+        </set>
+           where id=#{id}
+    </update>
+
+    <!--批量添加工作-->
+    <insert id="insertForEach" parameterType="java.util.List">
+          insert into role_menu (role_id,menu_id) values
+          <foreach collection="list" item="role" index="index" separator=",">
+               (
+                 #{role.roleId},#{role.menuId}
+              )
+          </foreach>
+    </insert>
+
+    <!--删除功能-->
+    <delete id="deleteRoleMenuByRoleId" parameterType="int">
+        delete  from role_menu where role_id=#{id}
+    </delete>
+
+    <!--查询角色树-->
+    <select id="queryRoleTree" resultType="com.yanzhen.po.Node">
+        select id,name as title,parent_id from role order by type
+    </select>
+
+</mapper>
